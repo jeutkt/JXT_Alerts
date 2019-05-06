@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
-
+const statusList = Object.getOwnPropertyNames(
+  require("./../models/Status").Status
+);
 let alertModel = undefined;
 
 /* Control usermodel initialisation */
@@ -18,35 +20,51 @@ router.get("/:id", function(req, res, next) {
     try {
       alertModel.get(id, (err, alertFound) => {
         if (alertFound) {
-          res.status(200).json(alertFound);
+          res.status(200).json({message:'successuf operation'});
         } else {
-          res.status(404).json({ message: `alert not found with id ${id}` });
+          res.status(404).json({ message: `alert not found ` });
         }
       });
     } catch (exc) {
       res.status(400).json({ message: exc.message });
     }
   } else {
-    res.status(400).json({ message: `Wrong parameter` });
+    res.status(400).json({ message: `Invalid ID supplied` });
   }
 });
 
-
 /* GET an alert with one or multiple status separated by comma */
-router.get("/search/:status",(req,res,next)=>{
-    const status=req.params.status
-    if(status){
-        const tmp=status.split(",")
-        alertModel.getFromStatus(tmp,(err,result)=>{
-            if(err || result.length<1){
-                res.status(404).json({message:"alert.not.found"})  
-            }
-            else{
-                res.status(200).json(result)
-            }   
-            })
+router.get("/search/:status", (req, res, next) => {
+  const status = req.params.status;
+  if (status) {
+    const tmp = status.split(",");
+    const invalidTag = tmp.reduce(
+      (accumulateur, current) => accumulateur || !statusList.includes(current),
+      false
+    );
+    if (!invalidTag) {
+      alertModel.getFromStatus(tmp, (err, result) => {
+        if (err || result.length < 1) {
+          res.status(404).json({ message: "alert.not.found" });
+        } else {
+            res.status(200).json({message:'successuf operation'});
+        }
+      });
+    } else {
+      res
+        .status(400)
+        .json({ message: "Invalid tag value" })
+        .end();
     }
-})
+  } else {
+    res
+      .status(400)
+      .json({
+        message: "wrong parameters"
+      })
+      .end();
+  }
+});
 
 /* Add a new alert. */
 router.post("/", function(req, res, next) {
@@ -57,14 +75,14 @@ router.post("/", function(req, res, next) {
         if (err) {
           res.status(400).json({ message: err.message });
         } else {
-          res.status(201).send(result);
+            res.status(200).json({message:'successuf operation'});
         }
       });
     } catch (exc) {
       res.status(400).json({ message: exc.message });
     }
   } else {
-    res.status(400).json({ message: `Wrong parameters` });
+    res.status(405).json({ message: `Invalid input` });
   }
 });
 
@@ -72,39 +90,40 @@ router.post("/", function(req, res, next) {
 router.patch("/:id", (req, res, next) => {
   const id = req.params.id;
   const newAlertProperties = req.body;
-    if (id && newAlertProperties) {
-      alertModel.update(id, newAlertProperties, (err, result) => {
-        if (err) {
-          if (err.message === "alert.not.found")
-            res.status(404).json({ message: err.message });
-          else {
-            res.status(400).json({ message: err.message });
-          }
-        } else {
-          res.status(200).json(result).end();
+  if (id && newAlertProperties) {
+    alertModel.update(id, newAlertProperties, (err, result) => {
+      if (err) {
+        if (err.message === "alert.not.found")
+          res.status(404).json({ message: err.message });
+        else {
+          res.status(400).json({ message: err.message });
         }
-      });
-    } else {
-      res.status(400).json({ message: `Wrong parameter` });
-    }
-  
+      } else {
+        res.status(200).json({message:'successuf operation'});
+      }
+    });
+  } else {
+    res.status(405).json({ message: `Invalid input` });
+  }
 });
 
 /* REMOVE a specific alert by id */
 router.delete("/:id", function(req, res, next) {
-    const id = req.params.id;
-    if(id){
-        alertModel.remove(id,(err,result)=>{
-            if(err){
-                res.status(404).json({
-                    message:err.message
-                })
-            }
-            else{
-                res.status(200).json(result).end()
-            }
-        })
-    }
+  const id = req.params.id;
+  if (id) {
+    alertModel.remove(id, (err, result) => {
+      if (err) {
+        res.status(404).json({
+          message: "Alert not found"
+        });
+      } else {
+        res.status(200).json({message:'successuf operation'});
+      }
+    });
+  }
+  else{
+      res.status(400).json({message:'Invalid ID supplied'})
+  }
 });
 
 /** return a closure to initialize model */
