@@ -31,6 +31,23 @@ router.get("/:id", function(req, res, next) {
   }
 });
 
+
+/* GET an alert with one or multiple status separated by comma */
+router.get("/search/:status",(req,res,next)=>{
+    const status=req.params.status
+    if(status){
+        const tmp=status.split(",")
+        alertModel.getFromStatus(tmp,(err,result)=>{
+            if(err || result.length<1){
+                res.status(404).json({message:"alert.not.found"})  
+            }
+            else{
+                res.status(200).json(result)
+            }   
+            })
+    }
+})
+
 /* Add a new alert. */
 router.post("/", function(req, res, next) {
   const newAlert = req.body;

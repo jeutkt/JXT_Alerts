@@ -32,14 +32,15 @@ const add = (alert, callback) => {
   });
 };
 
-const getFromStatus = status => {
-  Alerts.findOne({ type: Status }, (err, alert) => {
-    return err ? undefined : alert;
-  });
+const getFromStatus = (mystatus,callback) => {
+ Alerts.find({status:{$in:mystatus}},(err,alert)=>{
+ err?callback(err,null):callback(null,alert)
+
+ })
 };
 const get = (alertId, callback) => {
   Alerts.find({ id: alertId }, (err, alert) => {
-    return err ? callback(err, null) : callback(null, alert);
+      err ? callback(err, null) : callback(null, alert);
   });
 };
 
