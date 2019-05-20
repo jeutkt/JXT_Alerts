@@ -44,7 +44,7 @@ router.get("/search/:status", (req, res, next) => {
     );
     if (!invalidTag) {
       alertModel.getFromStatus(tmp, (err, result) => {
-        if (err || result.length < 1) {
+        if (err) {
           res.status(404).json({ message: "alert.not.found" });
         } else {
             res.status(200).json({message:'successuf operation'});
@@ -70,18 +70,15 @@ router.get("/search/:status", (req, res, next) => {
 router.post("/", function(req, res, next) {
   const newAlert = req.body;
   if (newAlert) {
-    try {
       alertModel.add(newAlert, (err, result) => {
         if (err) {
-          res.status(400).json({ message: err.message });
+          res.status(405).json({ message: `Invalid input` });
         } else {
             res.status(200).json({message:'successuf operation'});
         }
       });
-    } catch (exc) {
-      res.status(400).json({ message: exc.message });
     }
-  } else {
+  else {
     res.status(405).json({ message: `Invalid input` });
   }
 });
@@ -96,7 +93,7 @@ router.patch("/:id", (req, res, next) => {
         if (err.message === "alert.not.found")
           res.status(404).json({ message: err.message });
         else {
-          res.status(400).json({ message: err.message });
+          res.status(405).json({ message: `Invalid input` });
         }
       } else {
         res.status(200).json({message:'successuf operation'});

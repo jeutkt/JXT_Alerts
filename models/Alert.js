@@ -12,7 +12,7 @@ alertSchema = mongoose.Schema({
   from: { type: String, required: true },
   to: { type: String, required: true }
 });
-mongoose.set('useFindAndModify', false);
+mongoose.set("useFindAndModify", false);
 mongoose.connect(host, { useNewUrlParser: true });
 
 const Alerts = mongoose.model("Alerts", alertSchema);
@@ -26,37 +26,50 @@ const add = (alert, callback) => {
     if (err) {
       callback(err, null);
     } else {
-      console.log("saved");
       callback(null, newAlert);
     }
   });
 };
 
-const getFromStatus = (mystatus,callback) => {
- Alerts.find({status:{$in:mystatus}},(err,alert)=>{
- err?callback(err,null):callback(null,alert)
-
- })
+const getFromStatus = (mystatus, callback) => {
+  console.log(mystatus);
+  Alerts.find({ status: { $in: mystatus } }, (err, alert) => {
+    alert && alert.length > 1 ? callback(null, alert) : callback(err, null);
+  });
 };
 const get = (alertId, callback) => {
   Alerts.find({ id: alertId }, (err, alert) => {
-      err ? callback(err, null) : callback(null, alert);
+    alert && alert.length > 0 ? callback(null, alert) : callback(err, null);
   });
 };
 
 const update = (alertId, newalert, callback) => {
-  Alerts.findOneAndUpdate(
-    { id: alertId },
-    newalert,
-    { new: true },
-    (err, alert) => {
-      if (err) {
-        callback(err, null);
-      } else {
-        callback(null, alert);
+
+  const checkattributes = Object
+  .getOwnPropertyNames(newalert)
+    .reduce(
+      (accumulateur, current) =>
+        accumulateur || !Alerts.schema.paths.hasOwnProperty(current),
+      false
+    );
+  if (!checkattributes) {
+    Alerts.findOneAndUpdate(
+      { id: alertId },
+      newalert,
+      { new: true },
+      (err, alert) => {
+        if (err) {
+          callback(err, null);
+        } else {
+          alert
+            ? callback(null, alert)
+            : callback(new Error("alert.not.found"), null);
+        }
       }
-    }
-  );
+    );
+  } else {
+    callback(new Error("wrong.attribute"), null);
+  }
 };
 
 const remove = (alertId, callback) => {
@@ -64,7 +77,9 @@ const remove = (alertId, callback) => {
     if (err) {
       callback(err, null);
     } else {
-      callback(null, alert);
+      alert
+        ? callback(null, alert)
+        : callback(new Error("alert.not.found"), null);
     }
   });
 };
